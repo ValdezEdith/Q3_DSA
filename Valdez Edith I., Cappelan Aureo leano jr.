@@ -1,0 +1,178 @@
+const readline = require('readline');
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
+
+// Seller and menu predefined data
+const sellers = [
+  { username: "VALDEZ", password: "pintas" },
+  { username: "CAPELLAN", password: "unggoy" },
+];
+
+let menu = {
+  Appetizers: [
+    { name: "Steamed Tofu", price: 50 },
+    { name: "Gyoza", price: 75 },
+    { name: "Kimchi Pancake", price: 9 },
+  ],
+  CharbroiledEntrees: [
+    { name: "Bulgogi", price: 80 },
+    { name: "Chicken Gui", price: 60},
+    { name: "Beef Teriyaki", price: 90 },
+  ],
+  Drinks: [
+    { name: "Bubble Milktea", price: 45 },
+    { name: "Fresh Juices", price: 50 },
+    { name: "Sparkling Water", price: 25 },
+  ],
+};
+
+let cart = [];
+
+function mainMenu() {
+  rl.question("Are you a SELLER or CUSTOMER? ", (role) => {
+    if (role.toLowerCase() === "seller") {
+      sellerLogin();
+    } else if (role.toLowerCase() === "customer") {
+      customerMenu();
+    } else {
+      console.log("Invalid choice.");
+      rl.close();
+    }
+  });
+}
+
+// Seller menu and login
+function sellerLogin() {
+  rl.question("Enter username: ", (username) => {
+    rl.question("Enter password: ", (password) => {
+      const seller = sellers.find(
+        (s) => s.username === username && s.password === password
+      );
+
+      if (seller) {
+        console.log("Login successful.");
+        sellerActions();
+      } else {
+        console.log("Invalid credentials.");
+        rl.close();
+      }
+    });
+  });
+}
+
+function sellerActions() {
+  console.log("\n1. Logout\n2. Add Item\n3. Remove Item");
+  rl.question("Choose an action: ", (choice) => {
+    switch (choice) {
+      case "1":
+        console.log("Logged out.");
+        rl.close();
+        break;
+      case "2":
+        addItem();
+        break;
+      case "3":
+        removeItem();
+        break;
+      default:
+        console.log("Invalid choice.");
+        rl.close();
+    }
+  });
+}
+
+function addItem() {
+  rl.question("Enter category to add to (Appetizers/CharbroiledEntrees/Drinks): ", (category) => {
+    if (menu[category]) {
+      rl.question("Enter item name: ", (itemName) => {
+        rl.question("Enter price: ", (price) => {
+          menu[category].push({ name: itemName, price: parseFloat(price) });
+          console.log(`Item added to ${category}.`);
+          rl.close();
+        });
+      });
+    } else {
+      console.log("Invalid category.");
+      rl.close();
+    }
+  });
+}
+
+function removeItem() {
+  rl.question("Enter category to remove from (Appetizers/CharbroiledEntrees/Drinks): ", (category) => {
+    if (menu[category]) {
+      console.log("Items:", menu[category]);
+      rl.question("Enter item name to remove: ", (itemName) => {
+        const index = menu[category].findIndex((item) => item.name === itemName);
+        if (index >= 0) {
+          menu[category].splice(index, 1);
+          console.log(`Removed ${itemName} from ${category}.`);
+        } else {
+          console.log("Item not found.");
+        }
+        rl.close();
+      });
+    } else {
+      console.log("Invalid category.");
+      rl.close();
+    }
+  });
+}
+
+// Menu for customers
+function customerMenu() {
+  console.log("\nMenu:");
+  console.log("1. Order\n2. Cart\n3. Cancel");
+  rl.question("Choose an option: ", (choice) => {
+    if (choice === "1") orderItems();
+    else if (choice === "2") viewCart();
+    else rl.close();
+  });
+}
+
+function orderItems() {
+  console.log("Available Categories: Appetizers, CharbroiledEntrees , Drinks");
+  rl.question("Choose category: ", (category) => {
+    if (menu[category]) {
+      console.log("Available Items:");
+      menu[category].forEach((item, index) => {
+        console.log(`${index + 1}. ${item.name} - $${item.price}`);
+      });
+      rl.question("Choose item name to order: ", (itemName) => {
+        const item = menu[category].find((item) => item.name === itemName);
+        if (item) {
+          rl.question("Enter quantity: ", (qty) => {
+            const quantity = parseInt(qty, 10);
+            cart.push({ ...item, quantity });
+            console.log(`Ordered ${quantity} x ${item.name}`);
+            rl.close();
+          });
+        } else {
+          console.log("Item not found.");
+          rl.close();
+        }
+      });
+    } else {
+      console.log("Invalid category.");
+      rl.close();
+    }
+  });
+}
+
+function viewCart() {
+  console.log("\nYour Cart:");
+  console.table(cart);
+  rl.question("Type 'Cancel' to exit or 'Print' to view contents: ", (choice) => {
+    if (choice.toLowerCase() === "print") {
+      const sortedCart = cart.sort((a, b) => a.price - b.price);
+      console.table(sortedCart);
+    }
+    rl.close();
+  });
+}
+
+// Launch the primary menu
+mainMenu();
